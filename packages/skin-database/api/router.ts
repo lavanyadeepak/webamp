@@ -23,6 +23,7 @@ const options = {
 let skinCount: number | null = null;
 const cache = new LRU<string, MuseumPage>(options);
 
+// Purposefully REST
 router.get(
   "/auth/",
   asyncHandler(async (req, res) => {
@@ -37,6 +38,7 @@ router.get(
   })
 );
 
+// @deprecated Use GraphQL
 router.get(
   "/authed/",
   asyncHandler(async (req, res) => {
@@ -44,6 +46,7 @@ router.get(
   })
 );
 
+// Purposefully REST
 router.get(
   "/auth/discord",
   asyncHandler(async (req, res) => {
@@ -65,6 +68,7 @@ router.get(
   })
 );
 
+// @deprecated Use GraphQL
 router.get(
   "/skins/",
   asyncHandler(async (req, res) => {
@@ -93,6 +97,7 @@ router.get(
   })
 );
 
+// @deprecated Use GraphQL
 router.post(
   "/skins/get_upload_urls",
   asyncHandler(async (req, res) => {
@@ -113,6 +118,26 @@ router.post(
   })
 );
 
+// @deprecated Use GraphQL
+router.post(
+  "/feedback",
+  asyncHandler(async (req, res) => {
+    const payload = req.body as {
+      email?: string;
+      message: string;
+      url?: string;
+    };
+    req.notify({
+      type: "GOT_FEEDBACK",
+      url: payload.url,
+      message: payload.message,
+      email: payload.email,
+    });
+    res.json({ message: "sent" });
+  })
+);
+
+// @deprecate Use GraphQL
 router.post(
   "/skins/status",
   asyncHandler(async (req, res) => {
@@ -121,6 +146,7 @@ router.post(
   })
 );
 
+// @deprecated Use GraphQL
 router.get(
   "/skins/:md5",
   asyncHandler(async (req, res) => {
@@ -139,6 +165,32 @@ router.get(
   })
 );
 
+// @deprecated Use GraphQL
+router.get(
+  "/skins/:md5/metadata",
+  asyncHandler(async (req, res) => {
+    const { md5 } = req.params;
+    const skin = await SkinModel.fromMd5(req.ctx, md5);
+    if (skin == null) {
+      req.log(`Details for hash "${md5}" NOT FOUND`);
+      res.status(404).json();
+      return;
+    }
+    const [nsfw, fileName, readme] = await Promise.all([
+      skin.getIsNsfw(),
+      skin.getFileName(),
+      skin.getReadme(),
+    ]);
+    res.json({
+      md5: skin.getMd5(),
+      nsfw,
+      fileName,
+      readme,
+    });
+  })
+);
+
+// @deprecated Use GraphQL
 router.get(
   "/skins/:md5/debug",
   asyncHandler(async (req, res) => {
@@ -162,6 +214,7 @@ function requireAuthed(req, res, next) {
   }
 }
 
+// @deprecated Use GraphQL
 router.get(
   "/to_review",
   requireAuthed,
@@ -171,6 +224,7 @@ router.get(
   })
 );
 
+// @deprecated Use GraphQL
 router.post(
   "/skins/:md5/reject",
   requireAuthed,
@@ -188,6 +242,7 @@ router.post(
   })
 );
 
+// @deprecated Use GraphQL
 router.post(
   "/skins/:md5/approve",
   requireAuthed,
@@ -205,6 +260,7 @@ router.post(
   })
 );
 
+// @deprecated Use GraphQL
 // Unlike /report, this marks the skin NSFW right away without sending to
 // Discord. Because of this, it requires auth.
 router.post(
@@ -224,20 +280,20 @@ router.post(
   })
 );
 
+// @deprecated Use GraphQL
 router.post(
   "/skins/:md5/report",
   asyncHandler(async (req, res) => {
     const { md5 } = req.params;
     req.log(`Reporting skin with hash "${md5}"`);
-    const skin = await SkinModel.fromMd5(req.ctx, md5);
-    if (skin == null) {
-      throw new Error(`Cold not locate as skin with md5 ${md5}`);
-    }
+    // Blow up if there is no skin with this hash
+    await SkinModel.fromMd5Assert(req.ctx, md5);
     req.notify({ type: "REVIEW_REQUESTED", md5 });
     res.send("The skin has been reported and will be reviewed shortly.");
   })
 );
 
+// @deprecated Use GraphQL
 // User reports that they uploaded a skin
 router.post(
   "/skins/:md5/uploaded",
@@ -255,6 +311,7 @@ router.post(
   })
 );
 
+// @deprecated Use GraphQL
 router.get(
   "/approved",
   asyncHandler(async (req, res) => {
@@ -263,6 +320,7 @@ router.get(
   })
 );
 
+// @deprecated Special purpose URL
 router.get(
   "/stylegan.json",
   asyncHandler(async (req, res) => {

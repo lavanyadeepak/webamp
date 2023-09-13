@@ -1,4 +1,8 @@
 // import Sentry from "@sentry/node";
+import dotenv from "dotenv";
+
+dotenv.config();
+
 import { createApp } from "./app";
 import DiscordEventHandler from "./DiscordEventHandler";
 
@@ -14,7 +18,12 @@ const app = createApp({
     logError: (message, context) => console.error(message, context),
   },
 });
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+app.listen(port, () => {
+  console.log(
+    `Winamp Skin Museum database API app listening on http://localhost:${port}`
+  );
+  console.log(`Explore: http://localhost:${port}/graphql`);
+});
 
 // Initialize Sentry after we start listening. Any crash at start time will appear in the console and we'll notice.
 /*

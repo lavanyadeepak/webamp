@@ -1,4 +1,5 @@
 import * as Knex from "knex";
+import * as Skins from "../data/skins";
 
 export async function seed(knex: Knex): Promise<any> {
   // Deletes ALL existing entries
@@ -9,6 +10,7 @@ export async function seed(knex: Knex): Promise<any> {
   await knex("tweets").del();
   await knex("archive_files").del();
   await knex("refreshes").del();
+  await knex("museum_sort_order").del();
   // Inserts seed entries
   await knex("skins").insert([
     { md5: "a_fake_md5", skin_type: 1, emails: "" },
@@ -53,7 +55,9 @@ export async function seed(knex: Knex): Promise<any> {
     {
       skin_md5: "a_fake_md5",
       file_md5: "a_fake_file_md5",
-      file_date: new Date("1995-12-17T03:24:00"),
+      file_date: 957771892000,
     },
   ]);
+
+  await Skins.computeMuseumOrder();
 }

@@ -1,6 +1,64 @@
-import fs from "fs";
 import { knex } from "../db";
-import { TWEET_SNOWFLAKE_REGEX, MD5_REGEX } from "../utils";
+import { TWEET_SNOWFLAKE_REGEX } from "../utils";
+
+function isNotGeneratedFile(file) {
+  switch (file.source) {
+    case "derivative":
+    case "metadata":
+      return false;
+  }
+  switch (file.format) {
+    case "Metadata":
+    case "Item Tile":
+    case "JPEG Thumb":
+      return false;
+  }
+  return true;
+}
+
+export async function checkInternetArchiveMetadata(): Promise<void> {
+  const results = await knex.raw(
+    'SELECT skin_md5, identifier, metadata FROM ia_items WHERE metadata != "";'
+  );
+
+  const tooMany: string[] = [];
+  const tooFew: string[] = [];
+  const missingSkin: string[] = [];
+
+  for (const item of results) {
+    const { identifier, metadata, skin_md5 } = item;
+    try {
+      const allFiles = JSON.parse(metadata).files;
+      const files = allFiles.filter(isNotGeneratedFile);
+      if (files.length > 2) {
+        tooMany.push(skin_md5);
+        continue;
+        console.warn("Too many files", { files, identifier, skin_md5 });
+      }
+      const skinFile = files.find((file) => file.md5 === skin_md5);
+      if (skinFile == null) {
+        missingSkin.push(skin_md5);
+        continue;
+        console.warn("No skin file", { identifier, skin_md5 });
+      }
+      if (files.length < 2) {
+        console.log({ skin_md5, identifier, length: files.length });
+        tooFew.push(skin_md5);
+        continue;
+        console.warn("Too few files", { identifier, skin_md5 });
+      }
+    } catch (e) {
+      console.log(metadata);
+    }
+  }
+
+  console.table({
+    total: results.length,
+    tooMany: tooMany.length,
+    tooFew: tooFew.length,
+    missingSkin: missingSkin.length,
+  });
+}
 
 export async function integrityCheck(): Promise<void> {
   await noDuplicateTweetIds();
@@ -19,30 +77,6 @@ export async function integrityCheck(): Promise<void> {
   // Not needed regularly
   // await findHashesForTweets();
   console.log("Done.");
-}
-
-async function findHashesForTweets(): Promise<void> {
-  const todo = JSON.parse(fs.readFileSync("todo.json", "utf8"));
-  let other = 0;
-
-  for (const tweet of todo) {
-    const match = tweet.text.match(MD5_REGEX);
-    if (match) {
-      const md5 = match[0];
-      if (md5 == null) {
-        throw new Error("No md5?");
-      }
-      await knex("tweets").insert(
-        { skin_md5: md5, tweet_id: tweet.id_str },
-        []
-      );
-      continue;
-    }
-    // console.log({ urls, text: skin.text, id: skin.id_str });
-
-    other++;
-  }
-  console.log({ other });
 }
 
 async function skinsWithoutFiles(): Promise<void> {
@@ -84,20 +118,6 @@ async function reviewsWithoutSkins(): Promise<void> {
   }
 }
 
-async function noDuplicateIaItems(): Promise<void> {
-  console.log("Checking for duplicate Internet Archive items...");
-  const result = await knex.raw(
-    "SELECT identifier, COUNT(*) c FROM ia_items GROUP BY identifier HAVING c > 1;"
-  );
-  if (result.length > 0) {
-    console.warn(
-      `Found ${result.length} Internet Archive items with duplicate identifiers.`
-    );
-  } else {
-    console.log("None found.");
-  }
-}
-
 async function noDuplicateTweetIds(): Promise<void> {
   console.log("Checking for duplicate Tweet ids...");
   const result = await knex.raw(
@@ -117,20 +137,6 @@ async function noDuplicateTweetMd5s(): Promise<void> {
   );
   if (result.length > 0) {
     console.warn(`Found ${result.length} tweets with duplicate skin_md5.`);
-  } else {
-    console.log("None found.");
-  }
-}
-
-async function tweetsHaveIds(): Promise<void> {
-  console.log("Checking for Tweets with URLs but no ids...");
-  const results = await knex.raw(
-    "SELECT * FROM tweets WHERE tweet_id IS NULL;"
-  );
-  if (results.length > 0) {
-    for (const row of results) {
-      // console.log(row);
-    }
   } else {
     console.log("None found.");
   }

@@ -43,7 +43,8 @@ export async function postSkin({
     logger.warn("Could not find skin for md5", { md5, alert: true });
     return;
   }
-  const readmeText = skin.getReadme();
+  const readmeText = await skin.getReadme();
+  console.log("readmeText", readmeText);
   const tweet = await skin.getTweet();
   const tweetStatus = await skin.getTweetStatus();
   const iaItem = await skin.getIaItem();

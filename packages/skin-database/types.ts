@@ -5,13 +5,20 @@ export type TweetStatus =
   | "UNREVIEWED"
   | "NSFW";
 
+/**
+ * The judgement made about a skin by a moderator
+ * @gqlEnum
+ */
+export type Rating = "APPROVED" | "REJECTED" | "NSFW";
+
 export type SkinType = "MODERN" | "CLASSIC";
 
 export type SkinRow = {
+  id: number;
   md5: string;
   skin_type: number;
   emails: string;
-  readme_text: string;
+  // readme_text: string;
   average_color: string;
 };
 
@@ -23,9 +30,15 @@ export type TweetRow = {
   retweets: number;
 };
 
+export type InstagramPostRow = {
+  skin_md5: string;
+  url: string;
+  post_id: string;
+};
+
 export type ReviewRow = {
   skin_md5: string;
-  review: "APPROVED" | "REJECTED" | "NSFW";
+  review: Rating;
   reviewer: string;
 };
 
@@ -39,11 +52,22 @@ export type ArchiveFileRow = {
   file_name: string;
   file_md5: string;
   file_date: string;
+  uncompressed_size: number;
+  text_content: string | null;
+  is_directory: number; // SQLite uses integers for booleans
+};
+
+export type FileInfoRow = {
+  file_md5: string;
+  text_content: string | null;
+  size_in_bytes: number;
 };
 
 export type IaItemRow = {
   skin_md5: string;
   identifier: string;
+  metadata: string; // JSON from the internet archive
+  metadata_timestamp: string;
 };
 
 export type UploadStatus =

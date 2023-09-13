@@ -82,6 +82,61 @@ export default class DiscordEventHandler {
         );
         break;
       }
+      case "GOT_FEEDBACK": {
+        const dest = await this.getChannel(Config.FEEDBACK_SKIN_CHANNEL_ID);
+        const userMessage = action.message
+          .split("\n")
+          .map((line) => {
+            return `> ${line}`;
+          })
+          .join("\n");
+        let message = `Feedback:\n\n ${userMessage}`;
+        if (action.email != null) {
+          message += `\n\n--${action.email}`;
+        }
+        if (action.url != null) {
+          message += `\n(${action.url})`;
+        }
+
+        await dest.send(message);
+        break;
+      }
+
+      case "SYNCED_TO_ARCHIVE": {
+        const dest = await this.getChannel(Config.SKIN_UPLOADS_CHANNEL_ID);
+
+        const message = `Synced skins to archive.org. Success: ${action.successes.toLocaleString()} Errors: ${action.errors.toLocaleString()}.`;
+
+        await dest.send(message);
+        break;
+      }
+
+      case "STARTED_SYNC_TO_ARCHIVE": {
+        const dest = await this.getChannel(Config.SKIN_UPLOADS_CHANNEL_ID);
+
+        const message = `Starting sync to archive.org. Found ${action.count.toLocaleString()} to sync.`;
+
+        await dest.send(message);
+        break;
+      }
+      case "POPULAR_TWEET": {
+        const dest = await this.getChannel(Config.POPULAR_TWEETS_CHANNEL_ID);
+        const diff = Date.now() - Number(action.date);
+        const seconds = diff / 1000;
+        const minutes = seconds / 60;
+        const hours = Math.round(minutes / 60);
+
+        const message = `⭐️ This tweet passed **${action.bracket}** likes! (**${action.likes}** likes in **${hours}** hours)️ ⭐\n\n${action.url}`;
+
+        await dest.send(message);
+        break;
+      }
+      case "TWEET_BOT_MILESTONE": {
+        const dest = await this.getChannel(Config.POPULAR_TWEETS_CHANNEL_ID);
+        const message = `🎉 Tweet Bot Milestone! Just passed ${action.bracket.toLocaleString()} Followers 🎉`;
+        await dest.send(message);
+        break;
+      }
     }
   }
 

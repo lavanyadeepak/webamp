@@ -19,10 +19,10 @@ import PlaylistActionArea from "./PlaylistActionArea";
 import TrackList from "./TrackList";
 import PlaylistScrollBar from "./PlaylistScrollBar";
 
-import "../../../css/playlist-window.css";
 import { AppState } from "../../types";
 import FocusTarget from "../FocusTarget";
 import { useActionCreator, useTypedSelector } from "../../hooks";
+import WinampButton from "../WinampButton";
 
 interface Props {
   analyser: AnalyserNode;
@@ -111,8 +111,8 @@ function PlaylistWindow({ analyser }: Props) {
           )}
           <div className="playlist-top-right-fill draggable" />
           <div className="playlist-top-right draggable">
-            <div id="playlist-shade-button" onClick={toggleShade} />
-            <div
+            <WinampButton id="playlist-shade-button" onClick={toggleShade} />
+            <WinampButton
               id="playlist-close-button"
               onClick={() => close(WINDOWS.PLAYLIST)}
             />
@@ -123,9 +123,9 @@ function PlaylistWindow({ analyser }: Props) {
           <div className="playlist-middle-center">
             <TrackList />
           </div>
-          <div className="playlist-middle-right draggable">
+          <WinampButton className="playlist-middle-right draggable">
             <PlaylistScrollBar />
-          </div>
+          </WinampButton>
         </div>
         <div className="playlist-bottom draggable">
           <div className="playlist-bottom-left draggable">

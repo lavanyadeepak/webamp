@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/browser";
-import ReactDOM from "react-dom";
+import ReactDOM from "react-dom/client";
 // @ts-ignore
-import isButterchurnSupported from "butterchurn/lib/isSupported.min";
+import isButterchurnSupported from "butterchurn/dist/isSupported.min";
 import { getWebampConfig } from "./webampConfig";
 import * as SoundCloud from "./SoundCloud";
 
@@ -17,10 +17,9 @@ import {
 import { disableMarquee, skinUrl as configSkinUrl } from "./config";
 import DemoDesktop from "./DemoDesktop";
 import enableMediaSession from "./mediaSession";
+// import { choreograph } from "./choreography";
 
 declare global {
-  const SENTRY_DSN: string;
-  const COMMITHASH: string | undefined;
   interface Window {
     __webamp: WebampLazy;
   }
@@ -54,8 +53,10 @@ window.addEventListener("dragover", supressDragAndDrop);
 window.addEventListener("drop", supressDragAndDrop);
 
 try {
+  // TODO: Get this working in Parcel.
+  const COMMITHASH = undefined;
   Sentry.init({
-    dsn: SENTRY_DSN,
+    dsn: "https://12b6be8ef7c44f28ac37ab5ed98fd294@sentry.io/146021",
     release: typeof COMMITHASH === "undefined" ? "DEV" : COMMITHASH,
   });
 } catch (e) {
@@ -155,13 +156,19 @@ async function main() {
     document.getElementById("app") as HTMLDivElement
   );
 
+  // choreograph(webamp);
+
   if (!screenshot) {
     if (backgroundColor != null) {
       window.document.body.style.backgroundColor = backgroundColor;
     }
-    ReactDOM.render(
-      <DemoDesktop webamp={webamp} soundCloudPlaylist={soundcloudPlaylist} />,
-      document.getElementById("demo-desktop")
+    const div = document.getElementById("demo-desktop");
+    if (div == null) {
+      throw new Error("Could not locate #demo-desktop div");
+    }
+    const root = ReactDOM.createRoot(div);
+    root.render(
+      <DemoDesktop webamp={webamp} soundCloudPlaylist={soundcloudPlaylist} />
     );
   }
 }

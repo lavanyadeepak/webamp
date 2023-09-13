@@ -2,8 +2,13 @@ import * as Skins from "../data/skins";
 import S3 from "../s3";
 import { addSkinFromBuffer } from "../addSkin";
 import { EventHandler } from "./app";
+import DiscordEventHandler from "./DiscordEventHandler";
 
-async function* reportedUploads() {
+async function* reportedUploads(): AsyncGenerator<
+  { skin_md5: string; id: string; filename: string },
+  void,
+  unknown
+> {
   const seen = new Set();
   while (true) {
     const upload = await Skins.getReportedUpload();
@@ -38,14 +43,10 @@ function timeout<T>(p: Promise<T>, duration: number): Promise<T> {
   ]);
 }
 
-export async function processUserUploads(eventHandler: EventHandler) {
-  log("process user uploads");
-  // Ensure we only have one worker processing requests.
-  if (processing) {
-    return;
-  }
-  processing = true;
-  const uploads = reportedUploads();
+async function processGivenUserUploads(
+  eventHandler: EventHandler,
+  uploads: AsyncGenerator<{ skin_md5: string; id: string; filename: string }>
+) {
   log("Uploads to process...");
   for await (const upload of uploads) {
     log("Going to try: ", upload);
@@ -81,10 +82,48 @@ export async function processUserUploads(eventHandler: EventHandler) {
         message: e.message,
       } as const;
       eventHandler(action);
+      throw e
       console.error(e);
     }
   }
   log("Done processing uploads.");
+}
 
+export async function reprocessFailedUploads(handler: DiscordEventHandler) {
+  // eslint-disable-next-line no-inner-declarations
+  async function* erroredUploads(): AsyncGenerator<
+    { skin_md5: string; id: string; filename: string },
+    void,
+    unknown
+  > {
+    const seen = new Set();
+    while (true) {
+      const upload = await Skins.getErroredUpload();
+      console.log("Found one", { upload });
+      if (upload == null) {
+        return;
+      }
+      if (seen.has(upload.id)) {
+        console.error("Saw the same upload twice. It didn't get handled?");
+        return;
+      }
+      seen.add(upload.id);
+      yield upload;
+    }
+  }
+  const uploads = erroredUploads();
+
+  await processGivenUserUploads((event) => handler.handle(event), uploads);
+}
+
+export async function processUserUploads(eventHandler: EventHandler) {
+  log("process user uploads");
+  // Ensure we only have one worker processing requests.
+  if (processing) {
+    return;
+  }
+  processing = true;
+  const uploads = reportedUploads();
+  await processGivenUserUploads(eventHandler, uploads);
   processing = false;
 }

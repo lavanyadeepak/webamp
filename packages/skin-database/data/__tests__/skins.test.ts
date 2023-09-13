@@ -78,27 +78,39 @@ describe("seeded", () => {
       Array [
         Object {
           "fileName": "Zelda_Amp_3.wsz",
-          "url": "https://cdn.webampskins.org/screenshots/48bbdbbeb03d347e59b1eebda4d352d0.png",
+          "md5": "48bbdbbeb03d347e59b1eebda4d352d0",
+          "nsfw": false,
+          "url": "https://r2.webampskins.org/screenshots/48bbdbbeb03d347e59b1eebda4d352d0.png",
         },
         Object {
           "fileName": "path.wsz",
-          "url": "https://cdn.webampskins.org/screenshots/a_fake_md5.png",
+          "md5": "a_fake_md5",
+          "nsfw": false,
+          "url": "https://r2.webampskins.org/screenshots/a_fake_md5.png",
         },
         Object {
           "fileName": "nsfw.wsz",
-          "url": "https://cdn.webampskins.org/screenshots/a_nsfw_md5.png",
+          "md5": "a_nsfw_md5",
+          "nsfw": true,
+          "url": "https://r2.webampskins.org/screenshots/a_nsfw_md5.png",
         },
         Object {
           "fileName": "rejected.wsz",
-          "url": "https://cdn.webampskins.org/screenshots/a_rejected_md5.png",
+          "md5": "a_rejected_md5",
+          "nsfw": false,
+          "url": "https://r2.webampskins.org/screenshots/a_rejected_md5.png",
         },
         Object {
           "fileName": "tweeted.wsz",
-          "url": "https://cdn.webampskins.org/screenshots/a_tweeted_md5.png",
+          "md5": "a_tweeted_md5",
+          "nsfw": false,
+          "url": "https://r2.webampskins.org/screenshots/a_tweeted_md5.png",
         },
         Object {
           "fileName": "approved.wsz",
-          "url": "https://cdn.webampskins.org/screenshots/an_approved_md5.png",
+          "md5": "an_approved_md5",
+          "nsfw": false,
+          "url": "https://r2.webampskins.org/screenshots/an_approved_md5.png",
         },
       ]
     `);
@@ -108,6 +120,11 @@ describe("seeded", () => {
       .toMatchInlineSnapshot(`
       Array [
         Object {
+          "fileName": "tweeted.wsz",
+          "md5": "a_tweeted_md5",
+          "nsfw": false,
+        },
+        Object {
           "fileName": "Zelda_Amp_3.wsz",
           "md5": "48bbdbbeb03d347e59b1eebda4d352d0",
           "nsfw": false,
@@ -115,11 +132,6 @@ describe("seeded", () => {
         Object {
           "fileName": "path.wsz",
           "md5": "a_fake_md5",
-          "nsfw": false,
-        },
-        Object {
-          "fileName": "tweeted.wsz",
-          "md5": "a_tweeted_md5",
           "nsfw": false,
         },
         Object {
@@ -145,6 +157,8 @@ describe("seeded", () => {
       skin_md5: "48bbdbbeb03d347e59b1eebda4d352d0",
       error: "Whoops",
     });
+
+    await Skins.computeMuseumOrder();
     const page = await Skins.getMuseumPage({ offset: 0, first: 10 });
     const hasZelda = page.some(
       (skin) => skin.md5 === "48bbdbbeb03d347e59b1eebda4d352d0"
